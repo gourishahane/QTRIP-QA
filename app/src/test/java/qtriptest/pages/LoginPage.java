@@ -46,6 +46,13 @@ public class LoginPage {
 
         wait.until(ExpectedConditions.elementToBeClickable(login_button)).click();
         System.out.println("Clicked on 'Login to QTrip' button");
+        
+        
+        wait.until(ExpectedConditions.visibilityOf(logout_button));
+        if (!logout_button.isDisplayed() || !logout_button.isEnabled()) {
+            throw new Exception("Logout is NOT displayed or NOT enabled.");
+        }
+        System.out.println("Logout button displayed");
         return true;
     }
 

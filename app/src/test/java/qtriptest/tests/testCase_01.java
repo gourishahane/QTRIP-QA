@@ -3,14 +3,14 @@ package qtriptest.tests;
 import qtriptest.pages.HomePage;
 import qtriptest.pages.LoginPage;
 import qtriptest.pages.RegisterPage;
+import qtriptest.DriverSingleton;
 import qtriptest.ExternalDataProvider;
 import java.net.MalformedURLException;
-import java.net.URL;
-import org.openqa.selenium.remote.BrowserType;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 
@@ -24,17 +24,14 @@ public class testCase_01 {
     }
 
     @BeforeSuite(alwaysRun = true)
-    public static void createDriver() throws MalformedURLException {
-        logStatus("driver", "Initializing driver", "Started");
-        final DesiredCapabilities capabilities = new DesiredCapabilities();
-        capabilities.setBrowserName(BrowserType.CHROME);
-        driver = new RemoteWebDriver(new URL("http://localhost:8082/wd/hub"), capabilities);
-        logStatus("driver", "Initializing driver", "Success");
-        driver.manage().window().maximize(); 
-        logStatus("driver", "Maximize Window", "Success");
+    public void createDriver() throws MalformedURLException {
+        driver = DriverSingleton.getDriver("chrome");
+        if (driver == null) {
+            throw new NullPointerException("Driver initialization failed!");
+        }
     }
 
-    @Test(description = "Verify functionality of - Register new user, login user, and logout user", dataProvider = "qTripData", dataProviderClass = ExternalDataProvider.class, enabled = true)
+    @Test(description = "Verify functionality of - Register new user, login user, and logout user", priority = 1, groups = {"Login Flow"}, dataProvider = "qTripDataForTestCase01", dataProviderClass = ExternalDataProvider.class, enabled = true)
     public void TestCase01(String username, String password) {
         SoftAssert softAssert = new SoftAssert();
 
@@ -45,7 +42,6 @@ public class testCase_01 {
             homePage.navigateToHomePage();
             logStatus("HomePage test", "Navigating to Home Page", "Success");
 
-            // homePage.openNavigationBar();
             softAssert.assertTrue(homePage.isRegisterButtonVisible(), "Register button should be visible");
             logStatus("HomePage test", "Register button visibility", "Success");
 
@@ -77,11 +73,7 @@ public class testCase_01 {
     }
 
     @AfterSuite(alwaysRun = true)
-    public static void quitDriver() {
-        if (driver != null) {
-            driver.close();
-            driver.quit();
-            logStatus("driver", "Quitting driver", "Success");
-        }
+    public void closeBrowser() {
+        DriverSingleton.quitDriver();
     }
 }

@@ -1,0 +1,60 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="TestSuite">
+<test name="LoginFlowTests">
+<groups>
+<run>
+<include name="Login Flow" />
+</run>
+</groups>
+<classes> 
+<class name="qtriptest.tests.testCase_01">
+<methods>
+<include name="TestCase01"/>
+</methods>
+</class>
+</classes>
+</test>
+<test name="SearchAndFilterFlowTests">
+<groups>
+<run>
+<include name="Search and Filter Flow" />
+</run>
+</groups>
+<classes> 
+<class name="qtriptest.tests.testCase_02">
+<methods>
+<include name="TestCase02"/>
+</methods>
+</class>
+</classes>
+</test>
+<test name="BookingAndCancellationFlowTests">
+<groups>
+<run>
+<include name="Booking and Cancellation Flow" />
+</run>
+</groups>
+<classes> 
+<class name="qtriptest.tests.testCase_03">
+<methods>
+<include name="TestCase03"/>
+</methods>
+</class>
+</classes>
+</test>
+<test name="ReliabilityFlowTests">
+<groups>
+<run>
+<include name="Reliability Flow" />
+</run>
+</groups>
+<classes> 
+<class name="qtriptest.tests.testCase_04">
+<methods>
+<include name="TestCase04"/>
+</methods>
+</class>
+</classes>
+</test> 
+</suite>
+

@@ -22,6 +22,13 @@ public class HomePage {
 
     @FindBy(xpath = "//a[text()='Login Here']")
     WebElement loginHere_button;
+
+    @FindBy(className ="hero-input")
+    WebElement searchField;
+
+    
+    @FindBy(xpath = "//ul[@id='results']")
+    WebElement resultElement;
    
 
     public HomePage(RemoteWebDriver driver) {
@@ -31,6 +38,10 @@ public class HomePage {
     }
 
     public void navigateToHomePage() {
+
+        if (this.driver == null) {
+            throw new NullPointerException("Driver is null!");
+        }
         
         if (!this.driver.getCurrentUrl().equals(qTripUrl)) {
             this.driver.get(qTripUrl);
@@ -56,12 +67,7 @@ public class HomePage {
     public Boolean verifyLogout() throws Exception {
         WebDriverWait wait = new WebDriverWait(driver, 30);
         
-
-        wait.until(ExpectedConditions.visibilityOf(logout_button));
-        if (!logout_button.isDisplayed() || !logout_button.isEnabled()) {
-            throw new Exception("Logout is NOT displayed or NOT enabled.");
-        }
-        System.out.println("Logout button displayed");
+;
 
         wait.until(ExpectedConditions.elementToBeClickable(logout_button)).click();
         System.out.println("Logout button clicked");
@@ -71,4 +77,28 @@ public class HomePage {
         System.out.println("Login Here button displayed after logout: " + status);
         return status;
     }
+    public boolean verifySearchCity(String cityname) throws InterruptedException{
+        WebDriverWait wait= new WebDriverWait(driver, 30);
+        
+        wait.until(ExpectedConditions.elementToBeClickable(searchField));
+        Thread.sleep(5000);
+        searchField.sendKeys(cityname);
+        System.out.println("City name entered: "+cityname);
+       
+        wait.until(ExpectedConditions.visibilityOf(resultElement));
+        String resultTitle=resultElement.getText();
+        if(resultTitle.equals(cityname)){
+            System.out.println("City name is correctly displayed on autocomplete");
+            resultElement.click();
+            wait.until(ExpectedConditions.urlContains("/pages/adventures/"));    
+            System.out.println("Navigated to adventure page");
+            Thread.sleep(5000);
+            return true;         
+        }else if(resultTitle=="No City found"){
+            System.out.println("No matches found message is displayed");
+            return false;
+        }
+        return false;
+        
+     }
 }
