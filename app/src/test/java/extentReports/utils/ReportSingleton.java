@@ -3,61 +3,62 @@ package extentReports.utils;
 import com.relevantcodes.extentreports.ExtentReports;
 import com.relevantcodes.extentreports.ExtentTest;
 import com.relevantcodes.extentreports.LogStatus;
+import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import qtriptest.DriverSingleton;
-
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class ReportSingleton {
-
-    private static ExtentReports report;
+    private static ExtentReports extent;
     private static ExtentTest test;
     private static RemoteWebDriver driver;
 
-    private ReportSingleton() {}
+    private static final String SCREENSHOT_DIR = "screenshots/"; // Directory for screenshots
 
-    // Initialize WebDriver, ExtentReports, and ExtentTest in one method
-    public static void initialize(String browserType, String testName) throws IOException {
-       
-       if (report == null) {
-            String timestamp = String.valueOf(System.currentTimeMillis());
-            report = new ExtentReports(System.getProperty("user.dir") + "/Report_" + timestamp + ".html");
-            report.loadConfig(new File(System.getProperty("user.dir") + "/extent_customization_configs.xml"));
-        }
-        driver = DriverSingleton.getDriver(browserType);
-        if (driver == null) {
-            throw new NullPointerException("Driver initialization failed!");
-        }
-        test = report.startTest(testName);
-      
+    public static void initialize(String browser, String testName) throws Exception {
+        driver = DriverSingleton.getDriver(browser);
+        extent = new ExtentReports("extent-reports/TestReport.html", true);
+        test = extent.startTest(testName);
+        createScreenshotDirectory(); // Ensure the screenshot directory exists
     }
 
-    // Capture a screenshot and log details in one method
-    public static void logWithScreenshot(LogStatus status, String details, String screenshotName) {
+    private static void createScreenshotDirectory() {
+        File directory = new File(SCREENSHOT_DIR);
+        if (!directory.exists()) {
+            directory.mkdirs(); // Creates the directory if it doesn't exist
+        }
+    }
+
+    public static void logWithScreenshot(LogStatus status, String message, String screenshotName) {
+        String screenshotPath = captureScreenshot(screenshotName);
+        test.log(status, message + test.addScreenCapture(screenshotPath));
+    }
+
+    private static String captureScreenshot(String screenshotName) {
+        File srcFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String filePath = SCREENSHOT_DIR + screenshotName + "_" + timestamp + ".png";
+        File destFile = new File(filePath);
         try {
-            File srcFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-            String destPath = System.getProperty("user.dir") + "/screenshots" + screenshotName + "_" + System.currentTimeMillis() + ".png";
-            Files.copy(srcFile.toPath(), new File(destPath).toPath());
-            test.log(status, details, test.addScreenCapture(destPath));
+            FileUtils.copyFile(srcFile, destFile);
         } catch (IOException e) {
-            test.log(LogStatus.ERROR, "Failed to capture screenshot: " + e.getMessage());
+            e.printStackTrace();
         }
-    }
-
-    // Finalize the report and close WebDriver
-    public static void finalizeReport() {
-        if (report != null) {
-            report.endTest(test);
-            report.flush();
-        }
-        DriverSingleton.quitDriver();
+        return destFile.getAbsolutePath();
     }
 
     public static RemoteWebDriver getDriver() {
         return driver;
+    }
+
+    public static void finalizeReport() {
+        extent.endTest(test);
+        extent.flush();
+        DriverSingleton.quitDriver();
     }
 }
