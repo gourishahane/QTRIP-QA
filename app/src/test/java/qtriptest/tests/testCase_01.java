@@ -1,34 +1,21 @@
 package qtriptest.tests;
 
+import extentReports.utils.ReportSingleton;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
+import com.relevantcodes.extentreports.LogStatus;
 import qtriptest.pages.HomePage;
 import qtriptest.pages.LoginPage;
 import qtriptest.pages.RegisterPage;
-import qtriptest.DriverSingleton;
 import qtriptest.ExternalDataProvider;
-import java.net.MalformedURLException;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.SoftAssert;
 
 public class testCase_01 {
 
-    static RemoteWebDriver driver;
-
-    public static void logStatus(String type, String message, String status) {
-        System.out.println(String.format("%s | %s | %s | %s",
-                String.valueOf(java.time.LocalDateTime.now()), type, message, status));
-    }
-
     @BeforeSuite(alwaysRun = true)
-    public void createDriver() throws MalformedURLException {
-        driver = DriverSingleton.getDriver("chrome");
-        if (driver == null) {
-            throw new NullPointerException("Driver initialization failed!");
-        }
+    public void createDriver() throws Exception {
+        ReportSingleton.initialize("chrome", "TestCase_01: Verify functionality of Register, Login, and Logout");
     }
 
     @Test(description = "Verify functionality of - Register new user, login user, and logout user", priority = 1, groups = {"Login Flow"}, dataProvider = "qTripDataForTestCase01", dataProviderClass = ExternalDataProvider.class, enabled = true)
@@ -36,44 +23,44 @@ public class testCase_01 {
         SoftAssert softAssert = new SoftAssert();
 
         try {
-            logStatus("TestCase_01", "Testing with username: " + username + " and password: " + password, "Started");
+            ReportSingleton.logWithScreenshot(LogStatus.INFO, "Started test with username: " + username + " and password: " + password, "StartTest");
 
-            HomePage homePage = new HomePage(driver);
+            HomePage homePage = new HomePage(ReportSingleton.getDriver());
             homePage.navigateToHomePage();
-            logStatus("HomePage test", "Navigating to Home Page", "Success");
+            ReportSingleton.logWithScreenshot(LogStatus.INFO, "Navigated to Home Page", "HomePage");
 
-            softAssert.assertTrue(homePage.isRegisterButtonVisible(), "Register button should be visible");
-            logStatus("HomePage test", "Register button visibility", "Success");
+            boolean isRegisterButtonVisible = homePage.isRegisterButtonVisible();
+            softAssert.assertTrue(isRegisterButtonVisible, "Register button should be visible");
+            ReportSingleton.logWithScreenshot(isRegisterButtonVisible ? LogStatus.PASS : LogStatus.FAIL, "Register button visibility", "RegisterButton");
 
             homePage.navigateToRegisterPage();
-            logStatus("HomePage test", "Navigating to Register Page", "Success");
+            ReportSingleton.logWithScreenshot(LogStatus.INFO, "Navigated to Register Page", "RegisterPage");
 
-            RegisterPage register = new RegisterPage(driver);
-            boolean registrationStatus = register.registerUser(username, password,true);
-            logStatus("RegisterPage test", "Registration of new user", registrationStatus ? "Success" : "Failed");
+            RegisterPage register = new RegisterPage(ReportSingleton.getDriver());
+            boolean registrationStatus = register.registerUser(username, password, true);
+            ReportSingleton.logWithScreenshot(registrationStatus ? LogStatus.PASS : LogStatus.FAIL, "Registration of new user", "RegisterUser");
 
             String generatedUsername = register.lastGeneratedUsername;
             softAssert.assertNotNull(generatedUsername, "Username should be generated during registration");
 
-            LoginPage login = new LoginPage(driver);
+            LoginPage login = new LoginPage(ReportSingleton.getDriver());
             boolean loginStatus = login.loginExistingUser(generatedUsername, password);
-            logStatus("LoginPage test", "Login of existing user", loginStatus ? "Success" : "Failed");
+            ReportSingleton.logWithScreenshot(loginStatus ? LogStatus.PASS : LogStatus.FAIL, "Login of existing user", "LoginUser");
             softAssert.assertTrue(loginStatus, "Login should be successful");
 
             boolean logoutStatus = homePage.verifyLogout();
             softAssert.assertTrue(logoutStatus, "User should be logged out");
-            logStatus("LoginPage test", "Verify user is logged out", logoutStatus ? "Success" : "Failed");
+            ReportSingleton.logWithScreenshot(logoutStatus ? LogStatus.PASS : LogStatus.FAIL, "Verify user is logged out", "LogoutUser");
 
         } catch (Exception e) {
-            logStatus("TestCase_01", "Test execution failed", "Failed");
-            e.printStackTrace();
+            ReportSingleton.logWithScreenshot(LogStatus.ERROR, "Test execution failed: " + e.getMessage(), "TestError");
         }
 
         softAssert.assertAll();
     }
 
     @AfterSuite(alwaysRun = true)
-    public void closeBrowser() {
-        DriverSingleton.quitDriver();
+    public void closeDriver() {
+        ReportSingleton.finalizeReport();
     }
 }

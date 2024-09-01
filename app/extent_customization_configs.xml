@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extentreports>
+    <configuration>
+        <!-- Title of the document -->
+        <documentTitle>QTrip Regression Suite</documentTitle>
+        
+        <!-- Protocol for scripts and stylesheets (defaults to https) -->
+        <protocol>http</protocol>
+        
+        <!-- Document encoding (defaults to UTF-8) -->
+        <encoding>UTF-8</encoding>
+        
+        <!-- Report theme (standard or dark) -->
+        <theme>standard</theme>
+        
+        <!-- Report name displayed at top-nav with logo -->
+        <reportName align="center">
+            <!-- Uncomment and provide correct path to logo if needed -->
+            <!-- <img src="../logo.png" style="position:absolute;left:75px;"/> -->
+            <message>Regression test for QTrip</message>
+        </reportName>
+        
+        <!-- Location of charts in the test view (top or bottom) -->
+        <testViewChartLocation>bottom</testViewChartLocation>
+    </configuration>
+</extentreports>

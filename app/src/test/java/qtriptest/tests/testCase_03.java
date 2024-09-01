@@ -1,114 +1,105 @@
 package qtriptest.tests;
 
-import qtriptest.DriverSingleton;
+import com.relevantcodes.extentreports.LogStatus;
+import extentReports.utils.ReportSingleton;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
 import qtriptest.ExternalDataProvider;
 import qtriptest.pages.AdventureDetailsPage;
 import qtriptest.pages.AdventurePage;
 import qtriptest.pages.HomePage;
 import qtriptest.pages.LoginPage;
 import qtriptest.pages.RegisterPage;
-import java.net.MalformedURLException;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.SoftAssert;
 
 public class testCase_03 {
-    static RemoteWebDriver driver;
-
-    public static void logStatus(String type, String message, String status) {
-        System.out.println(String.format("%s | %s | %s | %s",
-                String.valueOf(java.time.LocalDateTime.now()), type, message, status));
-    }
 
     @BeforeSuite(alwaysRun = true)
-    public void createDriver() throws MalformedURLException {
-        driver = DriverSingleton.getDriver("chrome");
+    public void createDriver() throws Exception {
+        // Initialize the driver and report
+        ReportSingleton.initialize("chrome", "TestCase_03: Verify Adventure Booking and Cancellation Flow");
     }
 
-    @Test(description = "Verify that search and filters work fine",priority = 3,groups = {"Booking and Cancellation Flow"},dataProvider = "qTripDataForTestCase03", dataProviderClass = ExternalDataProvider.class,enabled = true)
+    @Test(description = "Verify that Adventure Booking and Cancellation flow works fine", 
+          priority = 3, 
+          groups = {"Booking and Cancellation Flow"}, 
+          dataProvider = "qTripDataForTestCase03", 
+          dataProviderClass = ExternalDataProvider.class, 
+          enabled = true)
     public void TestCase03(String NewUserName, String Password, String SearchCity, String AdventureName, String GuestName, String Date, String count) {
         SoftAssert softAssert = new SoftAssert();
 
-        logStatus("AdventureDetailPage test", "Verify Adventure Booking and Cancellation is working fine", "Started");
-
         try {
-            logStatus("HomePage test", "Navigation to HomePage", "Started");
-            HomePage homePage = new HomePage(driver);
+            // Log the start of the test
+            ReportSingleton.logWithScreenshot(LogStatus.INFO, "Started test with new user: " + NewUserName, "StartTest");
+
+            // Navigate to Home Page
+            HomePage homePage = new HomePage(ReportSingleton.getDriver());
             homePage.navigateToHomePage();
-            logStatus("HomePage test", "Navigation to HomePage", "Success");
+            ReportSingleton.logWithScreenshot(LogStatus.INFO, "Navigated to Home Page", "HomePage");
 
+            // Verify Register Button Visibility
+            boolean isRegisterButtonVisible = homePage.isRegisterButtonVisible();
+            softAssert.assertTrue(isRegisterButtonVisible, "Register button not visible or not enabled");
+            ReportSingleton.logWithScreenshot(isRegisterButtonVisible ? LogStatus.PASS : LogStatus.FAIL, "Register button visibility", "RegisterButton");
 
-            logStatus("HomePage test", "Register Button Visibility", "Started");
-            Boolean status = homePage.isRegisterButtonVisible();
-            softAssert.assertTrue(status, "Register button not visible or not enabled");
-            logStatus("HomePage test", "Register button is visible and enabled", "Success");
-
-
-            logStatus("HomePage test", "Navigation to RegisterPage", "Started");
+            // Navigate to Register Page
             homePage.navigateToRegisterPage();
-            logStatus("HomePage test", "Navigation to RegisterPage", "Success");
+            ReportSingleton.logWithScreenshot(LogStatus.INFO, "Navigated to Register Page", "RegisterPage");
 
+            // Register New User
+            RegisterPage register = new RegisterPage(ReportSingleton.getDriver());
+            boolean registrationStatus = register.registerUser(NewUserName, Password, true);
+            softAssert.assertTrue(registrationStatus, "New user registration failed");
+            ReportSingleton.logWithScreenshot(registrationStatus ? LogStatus.PASS : LogStatus.FAIL, "New user registration", "RegisterUser");
 
-            logStatus("RegisterPage test", "Registration of new user", "Started");
-            RegisterPage register = new RegisterPage(driver);
-            status = register.registerUser(NewUserName, Password, true);
-            softAssert.assertTrue(status, "New user registration failed");
-            logStatus("RegisterPage test", "Registration of new user", "Success");
+            // Login Existing User
+            String generatedUsername = register.lastGeneratedUsername;
+            LoginPage login = new LoginPage(ReportSingleton.getDriver());
+            boolean loginStatus = login.loginExistingUser(generatedUsername, Password);
+            softAssert.assertTrue(loginStatus, "Login of existing user failed");
+            ReportSingleton.logWithScreenshot(loginStatus ? LogStatus.PASS : LogStatus.FAIL, "Login existing user", "LoginUser");
 
+            // Search for City
+            boolean searchCityResult = homePage.verifySearchCity(SearchCity);
+            softAssert.assertTrue(searchCityResult, "Search city functionality failed");
+            ReportSingleton.logWithScreenshot(searchCityResult ? LogStatus.PASS : LogStatus.FAIL, "Search City functionality", "SearchCity");
 
-            logStatus("LoginPage test", "Login of existing user", "Started");
-            String username = register.lastGeneratedUsername;
-            LoginPage login = new LoginPage(driver);
-            status = login.loginExistingUser(username, Password);
-            softAssert.assertTrue(status, "Login of existing user failed");
-            logStatus("LoginPage test", "Login of existing user", "Success");
+            // Search for Adventures
+            AdventurePage adventurePage = new AdventurePage(ReportSingleton.getDriver());
+            boolean searchAdventureResult = adventurePage.verifySearchAdventures(AdventureName);
+            softAssert.assertTrue(searchAdventureResult, "Search adventures results are not correct");
+            ReportSingleton.logWithScreenshot(searchAdventureResult ? LogStatus.PASS : LogStatus.FAIL, "Search adventures functionality", "SearchAdventure");
 
+            // Perform Reservations
+            AdventureDetailsPage adventureDetailsPage = new AdventureDetailsPage(ReportSingleton.getDriver());
+            boolean reservationStatus = adventureDetailsPage.performReservations(GuestName, Date, count);
+            softAssert.assertTrue(reservationStatus, "Perform reservations failed");
+            ReportSingleton.logWithScreenshot(reservationStatus ? LogStatus.PASS : LogStatus.FAIL, "Perform reservations", "Reservations");
 
-            logStatus("HomePage test", "Verify search city functionality", "Started");
-            boolean searchResult = homePage.verifySearchCity(SearchCity);
-            softAssert.assertTrue(searchResult, "Search city functionality failed");
-            logStatus("HomePage test", "Verify search city functionality", "Success");
+            // Cancel Reservations
+            boolean cancelReservationStatus = adventureDetailsPage.cancelReservations();
+            softAssert.assertTrue(cancelReservationStatus, "Perform reservations cancellation failed");
+            ReportSingleton.logWithScreenshot(cancelReservationStatus ? LogStatus.PASS : LogStatus.FAIL, "Cancel reservations", "CancelReservations");
 
-
-            logStatus("AdventurePage test", "Verify search adventures", "Started");
-            AdventurePage adventurePage = new AdventurePage(driver);
-            status = adventurePage.verifySearchAdventures(AdventureName);
-            softAssert.assertTrue(status, "Search Adventures results are not correct");
-            logStatus("AdventurePage test", "Verify search adventures", "Success");
-
-
-            logStatus("AdventureDetailsPage test", "Verify Reservations", "Started");
-            AdventureDetailsPage adventureDetailsPage = new AdventureDetailsPage(driver);
-            status = adventureDetailsPage.performReservations(GuestName, Date, count);
-            softAssert.assertTrue(status, "Perform reservations failed");
-            logStatus("AdventureDetailsPage test", "Verify Reservations", "Success");
-
-
-            logStatus("AdventureDetailsPage test", "Verify Reservation Cancellations", "Started");
-            status = adventureDetailsPage.cancelReservations();
-            softAssert.assertTrue(status, "Perform reservations cancellation failed");
-            logStatus("AdventureDetailsPage test", "Verify Reservation Cancellations", "Success");
-
-
-            logStatus("HomePage test", "Verify User logout", "Started");
-            status = homePage.verifyLogout();
-            softAssert.assertTrue(status, "Verify user logout failed");
-            logStatus("HomePage test", "Verify User logout", "Success");
-
+            // Verify User Logout
+            boolean logoutStatus = homePage.verifyLogout();
+            softAssert.assertTrue(logoutStatus, "Verify user logout failed");
+            ReportSingleton.logWithScreenshot(logoutStatus ? LogStatus.PASS : LogStatus.FAIL, "Verify user logout", "LogoutUser");
 
         } catch (Exception e) {
-            logStatus("AdventureDetailsPage test", "Verify Adventure Booking and Cancellation is working fine", "Failed");
+            ReportSingleton.logWithScreenshot(LogStatus.ERROR, "Test execution failed: " + e.getMessage(), "TestError");
             e.printStackTrace();
         }
+
+        // Assert all soft assertions
         softAssert.assertAll();
     }
 
     @AfterSuite(alwaysRun = true)
     public void closeBrowser() {
-        DriverSingleton.quitDriver();
+        // Finalize the report and close the browser
+        ReportSingleton.finalizeReport();
     }
 }

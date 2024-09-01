@@ -1,70 +1,63 @@
 package qtriptest.tests;
 
-import qtriptest.DriverSingleton;
+import com.relevantcodes.extentreports.LogStatus;
+import extentReports.utils.ReportSingleton;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
 import qtriptest.ExternalDataProvider;
 import qtriptest.pages.AdventurePage;
 import qtriptest.pages.HomePage;
-import java.net.MalformedURLException;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.SoftAssert;
 
 public class testCase_02 {
-    static RemoteWebDriver driver;
-
-    
-    public static void logStatus(String type, String message, String status) {
-        System.out.println(String.format("%s | %s | %s | %s",
-                String.valueOf(java.time.LocalDateTime.now()), type, message, status));
-    }
 
     @BeforeSuite(alwaysRun = true)
-    public void createDriver() throws MalformedURLException {
-        
-        driver = DriverSingleton.getDriver("chrome");
+    public void createDriver() throws Exception {
+        // Initialize the driver and report
+        ReportSingleton.initialize("chrome", "TestCase_02: Verify Search and Filter Functionality");
     }
 
-    
-    @Test(description = "Verify that search and filters work fine",priority = 2,groups = {"Search and Filter flow"},enabled = true,dataProvider = "qTripDataForTestCase02", dataProviderClass = ExternalDataProvider.class)
-    public void TestCase02(String CityName,String Category_Filter,String Duration_Filter,String ExpectedFilteredResults,String ExpectedUnFilteredResults) {
+    @Test(description = "Verify that search and filters work fine", 
+          priority = 2, 
+          groups = {"Search and Filter flow"}, 
+          dataProvider = "qTripDataForTestCase02", 
+          dataProviderClass = ExternalDataProvider.class, 
+          enabled = true)
+    public void TestCase02(String CityName, String Category_Filter, String Duration_Filter, String ExpectedFilteredResults, String ExpectedUnFilteredResults) {
         SoftAssert softAssert = new SoftAssert();
 
         try {
+            // Log the start of the test
+            ReportSingleton.logWithScreenshot(LogStatus.INFO, "Started test with city: " + CityName, "StartTest");
 
-        logStatus("TestCase02", "Verify search and Filters", "Started");
-        HomePage homePage = new HomePage(driver);  
-        homePage.navigateToHomePage();
-        logStatus("HomePage test", "Navigation to HomePage", "Success");
-        
-        logStatus("HomePage test", "Verify search city functionality", "Started");
-        boolean searchResult = homePage.verifySearchCity(CityName);
-        softAssert.assertTrue(searchResult, "Search city functionality failed");
-       
+            // Navigate to Home Page
+            HomePage homePage = new HomePage(ReportSingleton.getDriver());
+            homePage.navigateToHomePage();
+            ReportSingleton.logWithScreenshot(LogStatus.INFO, "Navigated to Home Page", "HomePage");
 
-        logStatus("AdventurePage test", "Verify Filter functionality", "Started");
-        AdventurePage adventurePage=new AdventurePage(driver);
-        boolean filterResult=adventurePage.verifyFilter(Category_Filter,Duration_Filter,ExpectedFilteredResults,ExpectedUnFilteredResults);
-        softAssert.assertTrue(filterResult, "Filter results are not correct");
-       
-        logStatus("AdventurePage test", "Verify search and Filters", "Succeed");
+            // Verify Search City functionality
+            boolean searchResult = homePage.verifySearchCity(CityName);
+            softAssert.assertTrue(searchResult, "Search city functionality failed");
+            ReportSingleton.logWithScreenshot(searchResult ? LogStatus.PASS : LogStatus.FAIL, "Search City functionality", "SearchCity");
+
+            // Navigate to Adventure Page and verify filters
+            AdventurePage adventurePage = new AdventurePage(ReportSingleton.getDriver());
+            boolean filterResult = adventurePage.verifyFilter(Category_Filter, Duration_Filter, ExpectedFilteredResults, ExpectedUnFilteredResults);
+            softAssert.assertTrue(filterResult, "Filter results are not correct");
+            ReportSingleton.logWithScreenshot(filterResult ? LogStatus.PASS : LogStatus.FAIL, "Filter functionality", "Filters");
 
         } catch (Exception e) {
-            logStatus("TestCase02", "Test execution failed", "Failed");
-            e.printStackTrace();
+            ReportSingleton.logWithScreenshot(LogStatus.ERROR, "Test execution failed: " + e.getMessage(), "TestError");
         }
 
+        // Assert all soft assertions
         softAssert.assertAll();
     }
 
-    
     @AfterSuite(alwaysRun = true)
     public void closeBrowser() {
-        DriverSingleton.quitDriver();
+        // Finalize the report and close the browser
+        ReportSingleton.finalizeReport();
     }
-
-
 }

@@ -4,9 +4,11 @@
 # Ignore Gradle build output directory
 build
 *.class
+*.png
 app/chromedriver.log
 app/bin
 app/screenshots
+app/src/Screenshot
 
 HELP.md
 .gradle
